@@ -1,0 +1,20 @@
+[
+  {
+    "date_time": "2023-12-13T04:26:32.947040206+00:00",
+    "keyword_searched": "rust programming",
+    "url_opened": "/?sa=X&ved=0ahUKEwj17_eSyYuDAxWhrZUCHb65BJQQOwgC",
+    "main_url_part": ""
+  },
+  {
+    "date_time": "2023-12-13T04:26:33.877079157+00:00",
+    "keyword_searched": "web scraping",
+    "url_opened": "/?sa=X&ved=0ahUKEwjdtKSTyYuDAxUuppUCHeRWA9UQOwgC",
+    "main_url_part": ""
+  },
+  {
+    "date_time": "2023-12-13T04:26:34.784059120+00:00",
+    "keyword_searched": "tokio async",
+    "url_opened": "/?sa=X&ved=0ahUKEwjW69yTyYuDAxValJUCHSf_AhUQOwgC",
+    "main_url_part": ""
+  }
+]
