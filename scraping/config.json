@@ -1,4 +1,11 @@
 {
-    "keywords": ["rust programming", "web scraping", "tokio async"]
-  }
-  
+  "keywords": [
+    "testando essa bosta gigante",
+    "ou vai ou vai, assim, dessse jeito",
+    "web scraping",
+    "tokio async"
+  ],
+  "modes": [
+    "google"
+  ]
+}
