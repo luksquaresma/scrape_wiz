@@ -1,1 +1,1 @@
-# lnkdn_wiz
+# scrape_wiz
