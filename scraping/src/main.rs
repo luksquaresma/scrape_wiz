@@ -1,3 +1,6 @@
+// remember to run with testing outputs:
+// cargo test -- --nocapture
+
 pub mod search;
 pub mod utils;
 
@@ -11,12 +14,9 @@ use std::io::Read;
 // use crate::utils::NamedEnum;
 use crate::utils::Configs;
 
-
 const CONFIGS: Configs = Configs {
     search_config_path: "./config.json",
 };
-
-
 
 // struct SearchJob {
 //     keyword: String;
@@ -28,21 +28,16 @@ const CONFIGS: Configs = Configs {
 //     modes:
 // }
 
-
-
-
-
-
 //         // Search urls by type
 //         fn get_search_urls_by_type(&self, search_type:String) -> Vec<String>{
 //             match search_type {
-    
+
 //                 // Google search
 //                 String::from("google") => self.keywords.iter().map(
 //                     |search|
 //                     format!("https://www.google.com/search?q={}", search.replace(" ", "+"))
 //                     ).collect()
-    
+
 //                 // Panic with no compatible source
 //                 //  {
 //                 //     panic!("No compatible searches with type {search_type}")
@@ -76,14 +71,11 @@ const CONFIGS: Configs = Configs {
 //         ).collect()
 //     }
 
-
-
 // fn global_testing() {
 //     search::search_types::test()
 // }
 
 fn main() {
-
 
     // // Send a GET request to the URL
     // let response = get(&target_urls[0]).expect("Failed to send request");
@@ -125,5 +117,5 @@ fn main() {
     //     }
     // } else {
     //     println!("Request failed with status code: {}", response.status());
-    // }  
+    // }
 }
