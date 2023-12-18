@@ -1,5 +1,5 @@
 // remember to run with testing outputs:
-// cargo test -- --nocapture
+// clear; cargo test -- --nocapture --test-threads 1
 
 pub mod search;
 pub mod utils;

@@ -1,11 +1,12 @@
 {
   "keywords": [
-    "test",
-    "test 1",
-    "test 2",
-    "test 1 testt 2 test 3"
+    "This is the testing array",
+    "Each phrase shoud be spaced and clear",
+    "No puctuation should be observed",
+    "Spaces should be single",
+    "Simbols should not be oberved"
   ],
-  "modes": [
-    "google"
+  "variants": [
+    "Google", "YouTube"
   ]
 }

@@ -41,7 +41,9 @@ pub fn print_separator(level: u32) {
 
 pub const SEPARATOR_SIZE: usize = 20;
 
-pub const TESTING_SEARCHES: [&'static str; 5] = [
+pub const CONFIG_FILE_TEST: &'static str = "./src/tests/config.json";
+
+pub const TESTING_SEARCH_KEYWORDS: [&'static str; 5] = [
     "This is the testing array",
     "Each phrase shoud be spaced and clear",
     "No puctuation should be observed",
