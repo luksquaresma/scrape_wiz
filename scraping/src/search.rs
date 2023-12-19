@@ -82,6 +82,8 @@ pub mod search_types {
 
 pub mod search_pool {
 
+    use reqwest;
+
     use serde::{Deserialize, Serialize};
     use std::fs::File;
     use std::io::Read;
@@ -143,19 +145,29 @@ pub mod search_pool {
                 })
                 .collect::<Vec<Search>>();
         }
+
+        // pub fn get_output(&self) -> String {
+        //     let raw_response = reqwest::blocking::get(&self.url).expect("");
+        //     return raw_response;
+        // }
+
+        // pub fn perform(&self) -> SearchResult {
+        //     return SearchResult {
+        //         variant: self.variant.clone(),
+        //         keyword: self.keyword.clone(),
+        //         url: self.url.clone(),
+        //         output: self.get_output(),
+        //     };
+        // }
     }
 
     // Defines a serach result
-    pub struct SearchResults {
-        pub serch_type_name: String,
+    pub struct SearchResult {
+        pub variant: search_types::PossibleSearchTypes,
         pub keyword: String,
         pub url: String,
-        pub text_contents: String,
+        pub output: String,
     }
-
-    // println!("Target: \n {:#?}", searches);
-
-    // let target_urls: Vec<String> = searches.get_search_urls();
 }
 
 #[cfg(test)]
@@ -299,17 +311,18 @@ mod tests {
                 // Composed construction
                 print_separator(2);
 
-                let searches_raw = PossibleSearchTypes::iter().flat_map(
-                    |v| TESTING_SEARCH_KEYWORDS.iter().map(
-                        |k| Search {
+                let searches_raw = PossibleSearchTypes::iter()
+                    .flat_map(|v| {
+                        TESTING_SEARCH_KEYWORDS
+                            .iter()
+                            .map(|k| Search {
                                 variant: v.clone(),
                                 keyword: k.to_string(),
                                 url: v.get_search_url(&k.to_string()),
-                            }
-                        ).collect::<Vec<Search>>()
-                    ).collect::<Vec<Search>>();
-
-
+                            })
+                            .collect::<Vec<Search>>()
+                    })
+                    .collect::<Vec<Search>>();
 
                 // let searches_raw = TESTING_SEARCH_KEYWORDS
                 //     .iter()
@@ -324,24 +337,23 @@ mod tests {
                 //     })
                 //     .collect::<Vec<Search>>();
 
-
-                
-
-                let searches_manual = PossibleSearchTypes::iter().flat_map(
-                    |v| TESTING_SEARCH_KEYWORDS.iter().map(
-                        |k| Search::from_variant_name(&v.get_name(), &k.to_string())
-                    ).collect::<Vec<Search>>()
-                ).collect::<Vec<Search>>();
+                let searches_manual = PossibleSearchTypes::iter()
+                    .flat_map(|v| {
+                        TESTING_SEARCH_KEYWORDS
+                            .iter()
+                            .map(|k| Search::from_variant_name(&v.get_name(), &k.to_string()))
+                            .collect::<Vec<Search>>()
+                    })
+                    .collect::<Vec<Search>>();
 
                 let searches_automatic = Search::vec_from_search_config(&SearchConfig::from_json(
                     CONFIG_FILE_TEST.to_string(),
                 ));
 
                 assert!(searches_raw == searches_manual);
-                
+
                 // println!("searches_raw {:#?}", searches_raw);
                 // println!("searches_automatic {:#?}", searches_automatic);
-
 
                 assert!(searches_raw == searches_automatic);
                 println!("OK - Composed construction.");
