@@ -2,11 +2,6 @@ use std::any::TypeId;
 
 use serde::{Deserialize, Serialize};
 
-pub trait NamedEnum {
-    fn get_name(&self) -> String;
-    fn from_name(name: &String) -> Self;
-}
-
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Configs {
     pub search_config_path: &'static str,
@@ -36,7 +31,7 @@ pub fn print_separator(level: u32) {
         3 => "...",
         _ => panic!("Impossible separator level found!"),
     };
-    println!("\n{}", separator.repeat(SEPARATOR_SIZE));
+    println!("\n{}\n", separator.repeat(SEPARATOR_SIZE));
 }
 
 pub const SEPARATOR_SIZE: usize = 20;

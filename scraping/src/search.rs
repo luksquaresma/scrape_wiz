@@ -7,17 +7,12 @@
 
 pub mod search_types {
 
-    use crate::utils::{compare_to_typeid, print_separator, NamedEnum, TESTING_SEARCH_KEYWORDS};
-    use strum::IntoEnumIterator;
-    // use strum::IntoEnumIterator;
-    use strum_macros::EnumIter;
-
     use core::panic;
     use serde::{Deserialize, Serialize};
-    use std::any::TypeId;
+    use strum_macros::EnumIter;
 
     // Defines all possible search types
-    #[derive(Clone, Copy, Debug, Deserialize, EnumIter, PartialEq, Eq, Serialize)]
+    #[derive(Clone, Copy, Debug, Deserialize, EnumIter, Eq, PartialEq, Serialize)]
     pub enum PossibleSearchTypes {
         Google,
         // LinkedIn,
@@ -25,6 +20,22 @@ pub mod search_types {
     }
 
     impl PossibleSearchTypes {
+        pub fn get_name(&self) -> String {
+            if let Some(p) = SEARCH_PAIRS.iter().find(|p| p.variant == *self) {
+                p.name.to_string()
+            } else {
+                panic!("Impossible search! - Impossible search type error!")
+            }
+        }
+
+        pub fn from_name(name: &String) -> Self {
+            if let Some(p) = SEARCH_PAIRS.iter().find(|p| p.name == *name) {
+                p.variant
+            } else {
+                panic!("Impossible search! - Impossible search nae error!")
+            }
+        }
+
         pub fn get_search_url(&self, keyword: &String) -> String {
             match &self {
                 PossibleSearchTypes::Google => {
@@ -32,7 +43,7 @@ pub mod search_types {
                         "https://www.google.com/search?q={}",
                         keyword.replace(" ", "+")
                     )
-                },
+                }
                 // PossibleSearchTypes::LinkedIn => {
                 //     todo!()
                 // },
@@ -41,36 +52,19 @@ pub mod search_types {
                         "https://www.youtube.com/results?search_query={}",
                         keyword.replace(" ", "+")
                     )
-                },
-            }
-        }
-    }
-
-    impl NamedEnum for PossibleSearchTypes {
-        fn get_name(&self) -> String {
-            if let Some(p) = SEARCH_PAIRS.iter().find(|p| p.variant == *self) {
-                p.name.to_string()
-            } else {
-                panic!("Impossible search! - Impossible search type error!")
-            }
-        }
-        fn from_name(name: &String) -> Self {
-            if let Some(p) = SEARCH_PAIRS.iter().find(|p| p.name == *name) {
-                p.variant
-            } else {
-                panic!("Impossible search! - Impossible search name error!")
+                }
             }
         }
     }
 
     // Ties a speccific search type with its name
-    struct PssibleSearcheTypePair {
-        variant: PossibleSearchTypes,
-        name: &'static str,
+    pub struct PssibleSearcheTypePair {
+        pub variant: PossibleSearchTypes,
+        pub name: &'static str,
     }
 
     // Hard coded definition of the pairs Search-Name
-    const SEARCH_PAIRS: [PssibleSearcheTypePair; 2] = [
+    pub(crate) const SEARCH_PAIRS: [PssibleSearcheTypePair; 2] = [
         PssibleSearcheTypePair {
             variant: PossibleSearchTypes::Google,
             name: "Google",
@@ -84,103 +78,24 @@ pub mod search_types {
             name: "YouTube",
         },
     ];
-
-    #[test]
-    fn test() {
-        // Testing possible search pairs
-        // Itetares over every possible search pair and tests each possibility
-        print_separator(0);
-        println!("TESTING POSSIBLE SEARCH TYPES");
-
-        {
-            print_separator(1);
-            println!("Testing types of name and variant:");
-            for search in SEARCH_PAIRS {
-                print_separator(2);
-                {
-                    // Load the variable name, asserts its valid and prints it
-                    let name = *&search.name;
-                    assert!(compare_to_typeid(name, std::any::TypeId::of::<str>()));
-                    println!("OK - Type of search named {}", &name);
-                };
-                {
-                    // Load the variable variant, asserts its valid and prints it
-                    let variant = &search.variant;
-                    assert!(compare_to_typeid(
-                        variant,
-                        std::any::TypeId::of::<PossibleSearchTypes>()
-                    ));
-                    println!("OK - Type of search variant {:?}", &variant);
-                };
-            }
-        };
-
-        {
-            print_separator(1);
-            println!("Testing internal functions:");
-            println!("Testing searches used: {:#?}", TESTING_SEARCH_KEYWORDS);
-
-            for search in SEARCH_PAIRS {
-                print_separator(2);
-                {
-                    // fn get_name
-                    let name = PossibleSearchTypes::get_name(&search.variant);
-                    assert!(name == search.name);
-                    println!("OK - Getting name {} from type {:?}", name, search.variant);
-                };
-
-                {
-                    // fn from_name
-                    let variant = PossibleSearchTypes::from_name(&String::from(search.name));
-                    assert!(variant == search.variant);
-
-                    let name = variant.get_name();
-                    assert!(name == search.name);
-
-                    println!(
-                        "OK - Getting type {:?} from name {}", variant, search.name
-                    );
-                };
-
-                {
-                    // fn get_search_url -> Only a running test, not a double check yet
-                    let urls = TESTING_SEARCH_KEYWORDS
-                        .iter()
-                        .map(|keyword| {
-                            let url = search.variant.get_search_url(&keyword.to_string());
-                            assert!(compare_to_typeid(&url, std::any::TypeId::of::<String>()));
-                            return url;
-                        })
-                        .collect::<Vec<String>>();
-                    println!("OK - Search urls {:#?}", urls);
-                };
-            }
-        }
-    }
 }
 
 pub mod search_pool {
-    
+
     use serde::{Deserialize, Serialize};
-    use strum::IntoEnumIterator;
-    use strum_macros::EnumIter;
-    use std::collections::VecDeque;
     use std::fs::File;
     use std::io::Read;
-
-    use crate::{utils::{NamedEnum, print_separator, TESTING_SEARCH_KEYWORDS, CONFIG_FILE_TEST}, search::search_types::PossibleSearchTypes};
 
     use super::search_types;
 
     // Read defines the required inputs for creatong search jobs
     #[derive(Debug, Deserialize, Serialize)]
-    struct SearchConfig {
-        keywords: Vec<String>, // theese have to strings for now
-        variants: Vec<String>, // theese have to strings for now
+    pub struct SearchConfig {
+        pub keywords: Vec<String>, // theese have to strings for now
+        pub variants: Vec<String>, // theese have to strings for now
     }
-
     impl SearchConfig {
-        fn from_json(path: String) -> SearchConfig {
+        pub fn from_json(path: String) -> SearchConfig {
             // Open file as read-only
             let mut file = File::open(path).expect("Failed to open config file");
 
@@ -197,13 +112,12 @@ pub mod search_pool {
         }
     }
 
-
     // Defines a search job
-    #[derive(Debug, Deserialize, Serialize)]
-    struct Search {
-        variant: search_types::PossibleSearchTypes,
-        keyword: String,
-        url: String,
+    #[derive(Debug, Deserialize, PartialEq, Eq, Serialize)]
+    pub struct Search {
+        pub variant: search_types::PossibleSearchTypes,
+        pub keyword: String,
+        pub url: String,
     }
 
     impl Search {
@@ -231,17 +145,102 @@ pub mod search_pool {
         }
     }
 
-
     // Defines a serach result
-    struct SearchResults {
-        serch_type_name: String,
-        keyword: String,
-        url: String,
-        text_contents: String,
+    pub struct SearchResults {
+        pub serch_type_name: String,
+        pub keyword: String,
+        pub url: String,
+        pub text_contents: String,
+    }
+
+    // println!("Target: \n {:#?}", searches);
+
+    // let target_urls: Vec<String> = searches.get_search_urls();
+}
+
+#[cfg(test)]
+mod tests {
+    use strum::IntoEnumIterator;
+
+    use super::{search_pool::*, search_types::*};
+
+    use crate::{
+        search::search_types,
+        utils::{compare_to_typeid, print_separator, CONFIG_FILE_TEST, TESTING_SEARCH_KEYWORDS},
+    };
+
+    #[test]
+    fn test_search_types() {
+        // Itetares over every possible search pair and tests each possibility
+        print_separator(0);
+        println!("TESTING POSSIBLE SEARCH TYPES");
+
+        {
+            print_separator(1);
+            println!("Testing types of name and variant:");
+            for search in search_types::SEARCH_PAIRS {
+                print_separator(2);
+                {
+                    // Load the variable name, asserts its valid and prints it
+                    let name = *&search.name;
+                    assert!(compare_to_typeid(name, std::any::TypeId::of::<str>()));
+                    println!("OK - Type of search named {}", &name);
+                };
+                {
+                    // Load the variable variant, asserts its valid and prints it
+                    let variant = &search.variant;
+                    assert!(compare_to_typeid(
+                        variant,
+                        std::any::TypeId::of::<PossibleSearchTypes>()
+                    ));
+                    println!("OK - Type of search variant {:?}", &variant);
+                };
+            }
+        };
+
+        {
+            print_separator(1);
+            println!("Testing internal functions:");
+            println!("Testing searches used: \n{:#?}", TESTING_SEARCH_KEYWORDS);
+
+            for search in SEARCH_PAIRS {
+                print_separator(2);
+                {
+                    // fn get_name
+                    let name = PossibleSearchTypes::get_name(&search.variant);
+                    assert!(name == search.name);
+                    println!("OK - Getting name {} from type {:?}", name, search.variant);
+                };
+
+                {
+                    // fn from_name
+                    let variant = PossibleSearchTypes::from_name(&String::from(search.name));
+                    assert!(variant == search.variant);
+
+                    let name = variant.get_name();
+                    assert!(name == search.name);
+
+                    println!("OK - Getting type {:?} from name {}", variant, search.name);
+                };
+
+                {
+                    // fn get_search_url -> Only a running test, not a double check yet
+                    let urls = TESTING_SEARCH_KEYWORDS
+                        .iter()
+                        .map(|keyword| {
+                            let url = search.variant.get_search_url(&keyword.to_string());
+                            assert!(compare_to_typeid(&url, std::any::TypeId::of::<String>()));
+                            return url;
+                        })
+                        .collect::<Vec<String>>();
+                    println!("OK - Search urls \n{:#?}", urls);
+                };
+            }
+        }
     }
 
     #[test]
-    fn test() {
+    fn test_search_pool() {
         // Testing possible search pairs
         // Itetares over every possible search pair and tests each possibility
         print_separator(0);
@@ -256,8 +255,13 @@ pub mod search_pool {
                 // Simple declarations - running tests
                 print_separator(2);
                 let raw = SearchConfig {
-                    keywords: TESTING_SEARCH_KEYWORDS.iter().map(|k| k.to_string()).collect::<Vec<String>>(),
-                    variants: PossibleSearchTypes::iter().map(|v| v.get_name()).collect::<Vec<String>>(),
+                    keywords: TESTING_SEARCH_KEYWORDS
+                        .iter()
+                        .map(|k| k.to_string())
+                        .collect::<Vec<String>>(),
+                    variants: PossibleSearchTypes::iter()
+                        .map(|v| v.get_name())
+                        .collect::<Vec<String>>(),
                 };
                 println!("Basic declaration: \n{:#?}", raw);
             };
@@ -265,24 +269,86 @@ pub mod search_pool {
                 // Loading from JSON - running tests
                 print_separator(2);
                 let from_j = SearchConfig::from_json(CONFIG_FILE_TEST.to_string());
-                println!("From JSON: {:#?}", from_j);
+                println!("From JSON: \n{:#?}", from_j);
             };
         };
 
         {
             // struct Search
             print_separator(1);
-            println!("Struct SearchConfig");
+            println!("Struct Search");
+            {
+                // Raw type check
+                print_separator(2);
+                for v in PossibleSearchTypes::iter() {
+                    for &k in TESTING_SEARCH_KEYWORDS.iter() {
+                        assert_eq!(
+                            Search {
+                                variant: v,
+                                keyword: k.to_string(),
+                                url: v.get_search_url(&k.to_string())
+                            },
+                            Search::from_variant_name(&v.get_name(), &k.to_string())
+                        )
+                    }
+                }
+                println!("OK - Constructor from variant name checking.");
+            };
 
+            {
+                // Composed construction
+                print_separator(2);
+
+                let searches_raw = PossibleSearchTypes::iter().flat_map(
+                    |v| TESTING_SEARCH_KEYWORDS.iter().map(
+                        |k| Search {
+                                variant: v.clone(),
+                                keyword: k.to_string(),
+                                url: v.get_search_url(&k.to_string()),
+                            }
+                        ).collect::<Vec<Search>>()
+                    ).collect::<Vec<Search>>();
+
+
+
+                // let searches_raw = TESTING_SEARCH_KEYWORDS
+                //     .iter()
+                //     .flat_map(|k| {
+                //         PossibleSearchTypes::iter()
+                //             .map(|v| Search {
+                //                 variant: v.clone(),
+                //                 keyword: k.to_string(),
+                //                 url: v.get_search_url(&k.to_string()),
+                //             })
+                //             .collect::<Vec<Search>>()
+                //     })
+                //     .collect::<Vec<Search>>();
+
+
+                
+
+                let searches_manual = PossibleSearchTypes::iter().flat_map(
+                    |v| TESTING_SEARCH_KEYWORDS.iter().map(
+                        |k| Search::from_variant_name(&v.get_name(), &k.to_string())
+                    ).collect::<Vec<Search>>()
+                ).collect::<Vec<Search>>();
+
+                let searches_automatic = Search::vec_from_search_config(&SearchConfig::from_json(
+                    CONFIG_FILE_TEST.to_string(),
+                ));
+
+                assert!(searches_raw == searches_manual);
+                
+                // println!("searches_raw {:#?}", searches_raw);
+                // println!("searches_automatic {:#?}", searches_automatic);
+
+
+                assert!(searches_raw == searches_automatic);
+                println!("OK - Composed construction.");
+
+                print_separator(2);
+                println!("Tested searches: \n{:#?}", searches_automatic);
+            }
         }
     }
-
-    // // Read the configuration from the JSON file
-    // let searches = SearchConfig::from_json(String::from(CONFIGS.search_config_path));
-
-    // println!("Target: \n {:#?}", searches);
-
-    // let target_urls: Vec<String> = searches.get_search_urls();
-
-    // // println!("Target URLS: \n {:#?}", target_urls);
 }
