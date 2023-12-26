@@ -82,11 +82,12 @@ pub mod search_types {
 
 pub mod search_pool {
 
-    use reqwest;
-
+    use reqwest::Response;
     use serde::{Deserialize, Serialize};
     use std::fs::File;
     use std::io::Read;
+
+    use crate::utils::REQUEST_MAX_TRIES;
 
     use super::search_types;
 
@@ -146,18 +147,34 @@ pub mod search_pool {
                 .collect::<Vec<Search>>();
         }
 
-        // pub fn get_output(&self) -> String {
-        //     let raw_response = reqwest::blocking::get(&self.url).expect("");
-        //     return raw_response;
+        // pub fn get_text_output(&self, trys: &u32) -> Option<String> {
+        //     let mut t: u32 = trys.clone();
+        //     while t > 0 {
+        //         if let Ok(raw) = reqwest::blocking::get(&self.url) {
+        //             if let Ok(resp) = raw.text() {
+        //                 return Some(resp);
+        //             } else {
+        //                 t -= 1;
+        //             }
+        //         } else {
+        //             t -= 1;
+        //         }
+        //     }
+        //     return None;
         // }
 
-        // pub fn perform(&self) -> SearchResult {
-        //     return SearchResult {
-        //         variant: self.variant.clone(),
-        //         keyword: self.keyword.clone(),
-        //         url: self.url.clone(),
-        //         output: self.get_output(),
-        //     };
+        // pub fn perform(&self) -> Option<SearchResult> {
+        //     if let Some(resp) = self.get_text_output(&REQUEST_MAX_TRIES) {
+        //         return Some(
+        //             SearchResult {
+        //                 variant: self.variant.clone(),
+        //                 keyword: self.keyword.clone(),
+        //                 url: self.url.clone(),
+        //                 output: resp
+        //             });
+        //     } else {
+        //         None
+        //     }
         // }
     }
 
@@ -172,14 +189,11 @@ pub mod search_pool {
 
 #[cfg(test)]
 mod tests {
-    use strum::IntoEnumIterator;
-
-    use super::{search_pool::*, search_types::*};
-
-    use crate::{
-        search::search_types,
-        utils::{compare_to_typeid, print_separator, CONFIG_FILE_TEST, TESTING_SEARCH_KEYWORDS},
+    use super::{search_pool, search_types};
+    use crate::utils::{
+        compare_to_typeid, print_separator, CONFIG_FILE_TEST, TESTING_SEARCH_KEYWORDS,
     };
+    use strum::IntoEnumIterator;
 
     #[test]
     fn test_search_types() {
@@ -203,7 +217,7 @@ mod tests {
                     let variant = &search.variant;
                     assert!(compare_to_typeid(
                         variant,
-                        std::any::TypeId::of::<PossibleSearchTypes>()
+                        std::any::TypeId::of::<search_types::PossibleSearchTypes>()
                     ));
                     println!("OK - Type of search variant {:?}", &variant);
                 };
@@ -215,18 +229,19 @@ mod tests {
             println!("Testing internal functions:");
             println!("Testing searches used: \n{:#?}", TESTING_SEARCH_KEYWORDS);
 
-            for search in SEARCH_PAIRS {
+            for search in search_types::SEARCH_PAIRS {
                 print_separator(2);
                 {
                     // fn get_name
-                    let name = PossibleSearchTypes::get_name(&search.variant);
+                    let name = search_types::PossibleSearchTypes::get_name(&search.variant);
                     assert!(name == search.name);
                     println!("OK - Getting name {} from type {:?}", name, search.variant);
                 };
 
                 {
                     // fn from_name
-                    let variant = PossibleSearchTypes::from_name(&String::from(search.name));
+                    let variant =
+                        search_types::PossibleSearchTypes::from_name(&String::from(search.name));
                     assert!(variant == search.variant);
 
                     let name = variant.get_name();
@@ -266,12 +281,12 @@ mod tests {
             {
                 // Simple declarations - running tests
                 print_separator(2);
-                let raw = SearchConfig {
+                let raw = search_pool::SearchConfig {
                     keywords: TESTING_SEARCH_KEYWORDS
                         .iter()
                         .map(|k| k.to_string())
                         .collect::<Vec<String>>(),
-                    variants: PossibleSearchTypes::iter()
+                    variants: search_types::PossibleSearchTypes::iter()
                         .map(|v| v.get_name())
                         .collect::<Vec<String>>(),
                 };
@@ -280,7 +295,7 @@ mod tests {
             {
                 // Loading from JSON - running tests
                 print_separator(2);
-                let from_j = SearchConfig::from_json(CONFIG_FILE_TEST.to_string());
+                let from_j = search_pool::SearchConfig::from_json(CONFIG_FILE_TEST.to_string());
                 println!("From JSON: \n{:#?}", from_j);
             };
         };
@@ -292,15 +307,15 @@ mod tests {
             {
                 // Raw type check
                 print_separator(2);
-                for v in PossibleSearchTypes::iter() {
+                for v in search_types::PossibleSearchTypes::iter() {
                     for &k in TESTING_SEARCH_KEYWORDS.iter() {
                         assert_eq!(
-                            Search {
+                            search_pool::Search {
                                 variant: v,
                                 keyword: k.to_string(),
                                 url: v.get_search_url(&k.to_string())
                             },
-                            Search::from_variant_name(&v.get_name(), &k.to_string())
+                            search_pool::Search::from_variant_name(&v.get_name(), &k.to_string())
                         )
                     }
                 }
@@ -311,44 +326,36 @@ mod tests {
                 // Composed construction
                 print_separator(2);
 
-                let searches_raw = PossibleSearchTypes::iter()
+                let searches_raw = search_types::PossibleSearchTypes::iter()
                     .flat_map(|v| {
                         TESTING_SEARCH_KEYWORDS
                             .iter()
-                            .map(|k| Search {
+                            .map(|k| search_pool::Search {
                                 variant: v.clone(),
                                 keyword: k.to_string(),
                                 url: v.get_search_url(&k.to_string()),
                             })
-                            .collect::<Vec<Search>>()
+                            .collect::<Vec<search_pool::Search>>()
                     })
-                    .collect::<Vec<Search>>();
+                    .collect::<Vec<search_pool::Search>>();
 
-                // let searches_raw = TESTING_SEARCH_KEYWORDS
-                //     .iter()
-                //     .flat_map(|k| {
-                //         PossibleSearchTypes::iter()
-                //             .map(|v| Search {
-                //                 variant: v.clone(),
-                //                 keyword: k.to_string(),
-                //                 url: v.get_search_url(&k.to_string()),
-                //             })
-                //             .collect::<Vec<Search>>()
-                //     })
-                //     .collect::<Vec<Search>>();
-
-                let searches_manual = PossibleSearchTypes::iter()
+                let searches_manual = search_types::PossibleSearchTypes::iter()
                     .flat_map(|v| {
                         TESTING_SEARCH_KEYWORDS
                             .iter()
-                            .map(|k| Search::from_variant_name(&v.get_name(), &k.to_string()))
-                            .collect::<Vec<Search>>()
+                            .map(|k| {
+                                search_pool::Search::from_variant_name(
+                                    &v.get_name(),
+                                    &k.to_string(),
+                                )
+                            })
+                            .collect::<Vec<search_pool::Search>>()
                     })
-                    .collect::<Vec<Search>>();
+                    .collect::<Vec<search_pool::Search>>();
 
-                let searches_automatic = Search::vec_from_search_config(&SearchConfig::from_json(
-                    CONFIG_FILE_TEST.to_string(),
-                ));
+                let searches_automatic = search_pool::Search::vec_from_search_config(
+                    &search_pool::SearchConfig::from_json(CONFIG_FILE_TEST.to_string()),
+                );
 
                 assert!(searches_raw == searches_manual);
 

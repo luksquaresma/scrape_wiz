@@ -4,13 +4,6 @@
 pub mod search;
 pub mod utils;
 
-use chrono::expect;
-use core::panic;
-use reqwest::blocking::get;
-use serde::{Deserialize, Serialize};
-use std::fs::File;
-use std::io::Read;
-
 // use crate::utils::NamedEnum;
 use crate::utils::Configs;
 

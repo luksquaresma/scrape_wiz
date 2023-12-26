@@ -36,6 +36,8 @@ pub fn print_separator(level: u32) {
 
 pub const SEPARATOR_SIZE: usize = 20;
 
+pub const REQUEST_MAX_TRIES: u32 = 20;
+
 pub const CONFIG_FILE_TEST: &'static str = "./src/tests/config.json";
 
 pub const TESTING_SEARCH_KEYWORDS: [&'static str; 5] = [
